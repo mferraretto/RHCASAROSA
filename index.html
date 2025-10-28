@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Casa Rosa • Sistema de RH</title>
+  <link rel="icon" href="./assets/favicon.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+    import { firebaseConfig } from "./firebase-config.js";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.__APP__ = { app, auth, db };
+
+    onAuthStateChanged(auth, async (user) => {
+      const authed = !!user;
+      document.getElementById('section-auth').classList.toggle('hidden', authed);
+      document.getElementById('section-app').classList.toggle('hidden', !authed);
+      if(authed){
+        const uref = doc(db, "users", user.uid);
+        const snap = await getDoc(uref);
+        const profile = snap.exists() ? snap.data() : { role: "Colaborador", name: user.email };
+        document.querySelector('#user-name').textContent = profile.name || user.email;
+        document.querySelector('#user-role').textContent = profile.role || 'Colaborador';
+        window.dispatchEvent(new CustomEvent('app:ready', { detail: { user, profile }}));
+      }
+    });
+
+    window.logout = () => signOut(auth);
+  </script>
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">
+      <div class="dot"></div>
+      <h1 class="logo">Casa Rosa • RH</h1>
+    </div>
+    <div class="card" style="background:rgba(255,0,138,.08);border-color:rgba(255,0,138,.25)">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.35rem">
+        <span class="color-pill" style="background:var(--magenta)"></span>
+        <span class="color-pill" style="background:var(--tiffany)"></span>
+        <span class="color-pill" style="background:var(--yellow)"></span>
+      </div>
+      <div style="font-weight:700">Identidade Casa Rosa</div>
+      <small class="helper">Magenta • Verde Tiffany • Amarelo</small>
+    </div>
+    <div class="menu" id="menu">
+      <a href="#dashboard" class="active">📊 Painel</a>
+      <a href="#employees">👥 Colaboradores</a>
+      <a href="#attendance">⏱️ Ponto</a>
+      <a href="#vacations">🏝️ Férias</a>
+      <a href="#documents">📁 Documentos</a>
+      <a href="#ats">🧲 Recrutamento</a>
+      <a href="#performance">⭐ Desempenho</a>
+      <a href="#settings">⚙️ Configurações</a>
+    </div>
+    <div style="margin-top:auto" class="card">
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <div>
+          <div id="user-name" style="font-weight:700">—</div>
+          <div class="badge" id="user-role">Convidado</div>
+        </div>
+      </div>
+      <hr class="split">
+      <button class="btn ghost" onclick="logout()">Sair</button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <header class="header">
+      <div class="title">Sistema de RH • Casa Rosa</div>
+      <div class="tag">Beta</div>
+    </header>
+
+    <section id="section-auth" class="container">
+      <div class="grid cols-2">
+        <div class="card">
+          <h2>Entrar</h2>
+          <p><small class="helper">Acesso para equipe (ADM, RH, Gestor e Colaborador).</small></p>
+          <form id="login-form" class="grid">
+            <input class="input" type="email" name="email" placeholder="E-mail" required />
+            <input class="input" type="password" name="password" placeholder="Senha" required />
+            <button class="btn" type="submit">Entrar</button>
+          </form>
+          <hr class="split">
+          <details>
+            <summary><b>Novo por aqui?</b> Criar conta</summary>
+            <form id="signup-form" class="grid">
+              <input class="input" type="text" name="name" placeholder="Seu nome" required />
+              <select name="role" class="input">
+                <option>Colaborador</option>
+                <option>RH</option>
+                <option>Gestor</option>
+                <option>ADM</option>
+              </select>
+              <input class="input" type="email" name="email" placeholder="E-mail" required />
+              <input class="input" type="password" name="password" placeholder="Senha (mín. 6)" required />
+              <button class="btn" type="submit">Criar conta</button>
+            </form>
+          </details>
+        </div>
+        <div class="card">
+          <h2>Recursos do sistema</h2>
+          <ul>
+            <li>Cadastro de colaboradores, cargos, centros de custo.</li>
+            <li>Registro de ponto (entrada/saída), justificativas e exportação.</li>
+            <li>Solicitação e aprovação de férias e ausências.</li>
+            <li>Repositório de documentos (contratos, ASO, holerites).</li>
+            <li>Vagas, pipeline de candidatos e entrevistas.</li>
+            <li>Metas, avaliações 90/180/360 e PDI.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="section-app" class="hidden">
+      <div class="container">
+        <div id="view"></div>
+      </div>
+      <footer class="footer">© Casa Rosa — Sistema de RH</footer>
+    </section>
+  </main>
+
+  <script type="module" src="./auth.js"></script>
+  <script type="module" src="./app.js"></script>
+  <script type="module" src="./modules/employees.js"></script>
+  <script type="module" src="./modules/attendance.js"></script>
+  <script type="module" src="./modules/vacations.js"></script>
+  <script type="module" src="./modules/documents.js"></script>
+  <script type="module" src="./modules/ats.js"></script>
+  <script type="module" src="./modules/performance.js"></script>
+</body>
+</html>
