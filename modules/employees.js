@@ -11,18 +11,11 @@ async function listEmployees(){
 }
 
 async function saveEmployee(payload, id=null){
-  const timestamp = new Date().toISOString();
-  const data = {
-    ...payload,
-    status: payload.status || 'Ativo',
-    costCenter: payload.costCenter || 'Geral',
-    updatedAt: timestamp
-  };
   if(id){
-    await updateDoc(doc(db,'employees', id), data);
+    await updateDoc(doc(db,'employees', id), payload);
     return id;
   } else {
-    const ref = await addDoc(collection(db,'employees'), { ...data, createdAt: timestamp });
+    const ref = await addDoc(collection(db,'employees'), payload);
     return ref.id;
   }
 }

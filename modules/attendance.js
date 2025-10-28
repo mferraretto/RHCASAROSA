@@ -34,9 +34,6 @@ async function myToday(){
 
 window.AttendanceView = async function AttendanceView(){
   const mine = await myToday();
-  const rows = mine.length
-    ? mine.map(i=>`<tr><td>${new Date(i.ts).toLocaleString('pt-BR')}</td><td>${i.type==='in'?'Entrada':'Saída'}</td></tr>`).join('')
-    : '<tr><td colspan="2">Nenhum registro hoje.</td></tr>';
   document.getElementById('view').innerHTML = `
   <div class="grid cols-2">
     <div class="card">
@@ -48,7 +45,9 @@ window.AttendanceView = async function AttendanceView(){
       <hr class="split">
       <table class="table">
         <thead><tr><th>Registro</th><th>Tipo</th></tr></thead>
-        <tbody>${rows}</tbody>
+        <tbody>
+          ${mine.map(i=>`<tr><td>${new Date(i.ts).toLocaleString('pt-BR')}</td><td>${i.type==='in'?'Entrada':'Saída'}</td></tr>`).join('')}
+        </tbody>
       </table>
     </div>
     <div class="card">
