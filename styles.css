@@ -65,3 +65,27 @@ small.helper{color:#6b7280}
 .activity-line:last-child{border-bottom:none}
 .activity-line .when{font-size:.75rem;color:var(--muted);font-weight:500}
 #timeline{list-style:none;padding:0;margin:0}
+.metrics-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin:1rem 0}
+.card.mini{padding:1rem;border-radius:.9rem;border:1px solid #eef0f3;background:#fff}
+.list-unstyled{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.75rem}
+.list-inline{list-style:none;margin:0;padding:0;display:flex;gap:1rem;align-items:flex-end}
+.pill{display:inline-flex;align-items:center;justify-content:center;padding:.3rem .65rem;border-radius:.6rem;background:rgba(255,0,138,.12);color:var(--magenta);font-weight:600}
+.pill-value{font-size:1.5rem;font-weight:700;margin-top:.35rem}
+.bar-row{display:flex;flex-direction:column;gap:.35rem}
+.bar-info{display:flex;justify-content:space-between;align-items:center;font-size:.9rem}
+.bar-track{width:100%;height:6px;background:#f3f4f6;border-radius:999px;overflow:hidden}
+.bar-track span{display:block;height:100%;background:linear-gradient(90deg,var(--magenta),var(--tiffany));border-radius:999px}
+.table-scroll{overflow:auto;border-radius:1rem;border:1px solid #eef0f3}
+.table-scroll table{min-width:960px}
+.field{display:flex;flex-direction:column;gap:.35rem;font-size:.85rem}
+.modal-backdrop{position:fixed;inset:0;background:rgba(17,24,39,.68);display:flex;align-items:center;justify-content:center;z-index:999;animation:fadeIn .18s ease-out}
+.modal-backdrop.closing{animation:fadeOut .18s ease-in forwards}
+.modal-card{background:#fff;border-radius:1rem;padding:1.5rem;min-width:min(640px,90vw);max-height:90vh;overflow:auto;position:relative;box-shadow:0 25px 50px -12px rgba(0,0,0,.25)}
+.modal-close{position:absolute;top:.75rem;right:.75rem;background:transparent;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280}
+.modal-content{display:flex;flex-direction:column;gap:1rem}
+.profile-card{display:flex;flex-direction:column;gap:1rem}
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem}
+.profile-grid div{padding:.75rem;border:1px solid #eef0f3;border-radius:.75rem;background:#f9fafb}
+.profile-grid strong{display:block;font-size:.8rem;color:#4b5563;text-transform:uppercase;letter-spacing:.04em}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}

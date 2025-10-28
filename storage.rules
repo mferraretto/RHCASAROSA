@@ -3,9 +3,21 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     function isSignedIn() { return request.auth != null; }
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role in ['ADM','Gestor','RH'];
+    }
+    match /rh/docs/{employee}/{fileName} {
+      allow read: if isSignedIn() && (isAdmin() || employee == request.auth.token.email);
+      allow write: if isAdmin();
+    }
+
+    match /rh/holerites/{employee}/{fileName} {
+      allow read: if isSignedIn() && (isAdmin() || employee == request.auth.uid || employee == request.auth.token.email);
+      allow write: if isAdmin();
+    }
+
     match /rh/{allPaths=**} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow read, write: if isAdmin();
     }
   }
 }

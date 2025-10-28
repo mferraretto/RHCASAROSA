@@ -15,8 +15,9 @@ service cloud.firestore {
     }
 
     match /employees/{id} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow update: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid && !request.resource.data.diff(resource.data).changedKeys().hasAny(['salary','role','status','costCenter']));
+      allow create, delete: if isAdmin();
     }
 
     match /attendance/{id} {
@@ -32,7 +33,13 @@ service cloud.firestore {
     }
 
     match /documents/{id} {
-      allow read: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.employee == request.auth.token.email);
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /holerites/{id} {
+      allow read: if isAdmin() || (isSignedIn() && (resource.data.uid == request.auth.uid || resource.data.email == request.auth.token.email));
       allow create: if isAdmin();
       allow update, delete: if isAdmin();
     }
