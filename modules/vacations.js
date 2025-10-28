@@ -36,7 +36,7 @@ async function updateStatus(request, status){
   await logActivity('vacation.update', { status, email: request.email, start: request.start, end: request.end });
 }
 
-function renderManagerTable(items, focusEmail){
+function renderManagerTable(items){
   if(!items.length) return '<p>Nenhuma solicitação registrada.</p>';
   const ordered = items.slice().sort((a,b)=>{
     if(a.status === b.status) return new Date(`${b.start||''}T00:00:00`) - new Date(`${a.start||''}T00:00:00`);
@@ -51,8 +51,7 @@ function renderManagerTable(items, focusEmail){
         const badgeClass = req.status==='Aprovada'?'ok':(req.status==='Rejeitada'?'danger':'warn');
         const period = req.start ? `${req.start} → ${req.end || '—'}` : '—';
         const actions = req.status==='Pendente' ? `<div class="actions"><button class="btn ghost" data-request="${req.id}" data-status="Aprovada">Aprovar</button><button class="btn warn" data-request="${req.id}" data-status="Rejeitada">Rejeitar</button></div>` : '<small class="helper">Finalizado</small>';
-        const highlight = focusEmail && req.email === focusEmail ? 'row-highlight' : '';
-        return `<tr class="${highlight}">
+        return `<tr>
           <td>${req.email||'—'}</td>
           <td>${period}</td>
           <td><span class="badge ${badgeClass}">${req.status}</span></td>
@@ -69,7 +68,6 @@ window.VacationsView = async function VacationsView(){
   const profile = window.__APP__?.profile;
   const isManager = profile ? managerRoles.includes(profile.role) : false;
   const team = isManager ? await listAll() : [];
-  const focusEmail = isManager ? sessionStorage.getItem('vacations:focus') : null;
   document.getElementById('view').innerHTML = `
   <div class="grid cols-2">
     <div class="card">
@@ -97,8 +95,7 @@ window.VacationsView = async function VacationsView(){
   ${isManager ? `<div class="grid cols-1" style="margin-top:1rem">
     <div class="card">
       <h2>Solicitações da equipe</h2>
-      ${focusEmail ? `<p class="helper">Filtrando destaque para <strong>${focusEmail}</strong>.</p>` : ''}
-      ${renderManagerTable(team, focusEmail)}
+      ${renderManagerTable(team)}
     </div>
   </div>` : ''}`;
 
@@ -121,8 +118,5 @@ window.VacationsView = async function VacationsView(){
         window.VacationsView();
       };
     });
-  }
-  if(focusEmail){
-    sessionStorage.removeItem('vacations:focus');
   }
 };

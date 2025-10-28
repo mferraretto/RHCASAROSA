@@ -13,20 +13,6 @@ async function listDocs(employeeEmail){
   return rows;
 }
 
-async function renderDocsFor(email){
-  const target = document.getElementById('docs-list');
-  if(!target) return;
-  if(!email){
-    target.innerHTML = '<p class="helper">Informe o e-mail do colaborador.</p>';
-    return;
-  }
-  const list = await listDocs(email);
-  target.innerHTML = list.length? `<table class="table">
-      <thead><tr><th>Tipo</th><th>Arquivo</th><th>Quando</th></tr></thead>
-      <tbody>${list.map(d=>`<tr><td>${d.type}</td><td><a href="${d.url}" target="_blank">Abrir</a></td><td>${new Date(d.uploadedAt).toLocaleString('pt-BR')}</td></tr>`).join('')}</tbody>
-    </table>` : '<p>Nada encontrado.</p>';
-}
-
 window.DocumentsView = async function DocumentsView(){
   document.getElementById('view').innerHTML = `
   <div class="grid cols-2">
@@ -68,20 +54,13 @@ window.DocumentsView = async function DocumentsView(){
     e.target.reset();
   };
 
-  const searchForm = document.getElementById('search');
-  searchForm.onsubmit = async (e)=>{
+  document.getElementById('search').onsubmit = async (e)=>{
     e.preventDefault();
     const email = new FormData(e.target).get('employee');
-    await renderDocsFor(email);
+    const list = await listDocs(email);
+    document.getElementById('docs-list').innerHTML = list.length? `<table class="table">
+      <thead><tr><th>Tipo</th><th>Arquivo</th><th>Quando</th></tr></thead>
+      <tbody>${list.map(d=>`<tr><td>${d.type}</td><td><a href="${d.url}" target="_blank">Abrir</a></td><td>${new Date(d.uploadedAt).toLocaleString('pt-BR')}</td></tr>`).join('')}</tbody>
+    </table>` : '<p>Nada encontrado.</p>';
   };
-
-  const storedEmail = sessionStorage.getItem('documents:search');
-  if(storedEmail){
-    const input = searchForm.querySelector('input[name="employee"]');
-    if(input){
-      input.value = storedEmail;
-      await renderDocsFor(storedEmail);
-    }
-    sessionStorage.removeItem('documents:search');
-  }
 }

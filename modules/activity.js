@@ -34,7 +34,6 @@ const labels = {
   'employee.add': (item) => `👥 Novo colaborador: ${item.meta?.name || item.meta?.email || 'Cadastro realizado'}`,
   'employee.update': (item) => `📝 Dados atualizados para ${item.meta?.name || item.meta?.email || 'colaborador'}`,
   'employee.remove': (item) => `🗑️ Colaborador removido (${item.meta?.name || item.meta?.email || 'registro'})`,
-  'employee.payroll': (item) => `📄 Holerite gerado para ${item.meta?.employee || 'colaborador'} (${item.meta?.month}/${item.meta?.year})`,
   'attendance.clock': (item) => `⏱️ ${item.meta?.type === 'in' ? 'Entrada' : 'Saída'} registrada`,
   'vacation.request': (item) => `🏝️ Solicitação de férias ${item.meta?.start ? `(${item.meta.start} → ${item.meta.end})` : ''}`,
   'vacation.update': (item) => `✅ Férias ${item.meta?.status?.toLowerCase() || 'atualizadas'} para ${item.meta?.email || 'colaborador'}`,
