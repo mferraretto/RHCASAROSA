@@ -84,7 +84,7 @@
           <p><small class="helper">Acesso para equipe (ADM, RH, Gestor e Colaborador).</small></p>
           <form id="login-form" class="grid">
             <input class="input" type="email" name="email" placeholder="E-mail" required />
-            <input class="input" type="password" name="password" placeholder="Senha" required />
+            <input class="input" type="password" name="password" placeholder="Senha" required minlength="6" />
             <button class="btn" type="submit">Entrar</button>
           </form>
           <hr class="split">
@@ -99,7 +99,7 @@
                 <option>ADM</option>
               </select>
               <input class="input" type="email" name="email" placeholder="E-mail" required />
-              <input class="input" type="password" name="password" placeholder="Senha (mín. 6)" required />
+              <input class="input" type="password" name="password" placeholder="Senha (mín. 6)" required minlength="6" />
               <button class="btn" type="submit">Criar conta</button>
             </form>
           </details>
