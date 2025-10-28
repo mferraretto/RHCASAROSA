@@ -15,8 +15,20 @@ service cloud.firestore {
     }
 
     match /employees/{id} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == resource.data.uid &&
+        resource.data.diff(request.resource.data).changedKeys().hasOnly([
+          'phone',
+          'personalEmail',
+          'address',
+          'emergencyContact',
+          'updatedAt'
+        ])
+      );
     }
 
     match /attendance/{id} {
@@ -32,9 +44,21 @@ service cloud.firestore {
     }
 
     match /documents/{id} {
-      allow read: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.employee == request.auth.token.email);
       allow create: if isAdmin();
       allow update, delete: if isAdmin();
+    }
+
+    match /holerites/{id} {
+      allow read: if isAdmin() || (isSignedIn() && (resource.data.uid == request.auth.uid || resource.data.employeeEmail == request.auth.token.email));
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /updateRequests/{id} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow delete: if isAdmin();
     }
 
     match /jobs/{id} {

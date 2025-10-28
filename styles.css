@@ -61,6 +61,32 @@ small.helper{color:#6b7280}
 .toolbar-actions{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:flex-end;min-width:240px;flex:1}
 .toolbar-actions .search{flex:1;min-width:220px}
 .summary-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:1rem 0}
+.insights{margin:1rem 0 2rem 0}
+.insights-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.card.mini{padding:1rem;border-radius:.85rem;background:var(--card);border:1px solid #eef0f3;display:flex;flex-direction:column;gap:.6rem}
+.card.mini h4{margin:0;font-size:1rem}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.4rem}
+.list li{padding:.25rem 0;border-bottom:1px dashed #f1f5f9}
+.list li:last-child{border-bottom:none}
+.actions-right{display:flex;justify-content:flex-end;gap:.5rem;align-items:center}
+.grid .full{grid-column:1/-1}
+.stacked{display:flex;flex-direction:column;gap:.35rem;font-size:.9rem}
+.stacked span{font-weight:600}
+.stacked.full{grid-column:1/-1}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(17,24,39,0.35);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:1.5rem;z-index:9999}
+.modal{background:white;border-radius:1rem;padding:1.5rem;max-width:720px;width:100%;display:flex;flex-direction:column;gap:1rem;max-height:90vh;overflow:auto}
+.modal header{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.modal form .input{margin-bottom:0}
+.modal form textarea{resize:vertical}
+.modal form button[type=submit]{align-self:flex-end}
+.modal .actions-right{margin-top:1rem}
+.card .actions-right button{white-space:nowrap}
+.row-highlight{background:rgba(255,0,138,0.08)}
+
+@media (max-width:960px){
+  .grid.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.cols-2{grid-template-columns:repeat(1,minmax(0,1fr))}
+}
 .activity-line{display:flex;flex-direction:column;gap:.2rem;padding:.4rem 0;border-bottom:1px solid #f1f5f9}
 .activity-line:last-child{border-bottom:none}
 .activity-line .when{font-size:.75rem;color:var(--muted);font-weight:500}
