@@ -2,6 +2,31 @@
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 
+const AUTH_ERROR_MESSAGES = {
+  "auth/email-already-in-use": "Este e-mail já está cadastrado.",
+  "auth/invalid-email": "O e-mail informado é inválido.",
+  "auth/weak-password": "A senha deve conter ao menos 6 caracteres.",
+  "auth/missing-password": "Informe a senha.",
+  "auth/network-request-failed": "Não foi possível conectar ao servidor. Verifique sua internet.",
+  "auth/too-many-requests": "Muitas tentativas consecutivas. Tente novamente mais tarde.",
+  "auth/admin-restricted-operation": "Cadastros estão temporariamente indisponíveis. Fale com o administrador.",
+  "auth/operation-not-allowed": "Este método de acesso está desativado no momento.",
+  "auth/user-not-found": "Usuário não encontrado.",
+  "auth/wrong-password": "Senha incorreta."
+};
+
+function translateAuthError(error) {
+  if (!error) return "Erro desconhecido";
+  const code = typeof error === "string" ? error : error.code;
+  if (code && AUTH_ERROR_MESSAGES[code]) {
+    return AUTH_ERROR_MESSAGES[code];
+  }
+  if (error.message) {
+    return error.message;
+  }
+  return "Algo deu errado. Tente novamente.";
+}
+
 const auth = getAuth();
 const db = getFirestore();
 
@@ -15,7 +40,7 @@ if (loginForm){
     try{
       await signInWithEmailAndPassword(auth, data.email, data.password);
     }catch(err){
-      alert('Erro ao entrar: ' + err.message);
+      alert('Erro ao entrar: ' + translateAuthError(err));
     }
   });
 }
@@ -35,7 +60,7 @@ if (signupForm){
       });
       alert('Conta criada. Você já está logado!');
     }catch(err){
-      alert('Erro ao cadastrar: ' + err.message);
+      alert('Erro ao cadastrar: ' + translateAuthError(err));
     }
   });
 }
