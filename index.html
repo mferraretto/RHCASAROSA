@@ -27,12 +27,7 @@
         const profile = snap.exists() ? snap.data() : { role: "Colaborador", name: user.email };
         document.querySelector('#user-name').textContent = profile.name || user.email;
         document.querySelector('#user-role').textContent = profile.role || 'Colaborador';
-        window.__APP__.user = user;
-        window.__APP__.profile = profile;
         window.dispatchEvent(new CustomEvent('app:ready', { detail: { user, profile }}));
-      } else {
-        window.__APP__.user = null;
-        window.__APP__.profile = null;
       }
     });
 
