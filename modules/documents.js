@@ -1,6 +1,7 @@
 // Documents repository per employee (Storage + Firestore refs)
 import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
+import { logActivity } from "./activity.js";
 
 const db = getFirestore();
 const storage = getStorage();
@@ -48,6 +49,7 @@ window.DocumentsView = async function DocumentsView(){
     await uploadBytes(r, file);
     const url = await getDownloadURL(r);
     await addDoc(collection(db,'documents'), { employee, type, path, url, uploadedAt: new Date().toISOString() });
+    await logActivity('documents.upload', { employee, type, filename: file.name });
     alert('Documento enviado!');
     e.target.reset();
   };

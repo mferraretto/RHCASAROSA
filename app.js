@@ -1,6 +1,6 @@
 // Simple client-side router and ACL
 import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+import { fetchRecentActivities, describeActivity } from "./modules/activity.js";
 
 const view = document.getElementById('view');
 const menu = document.getElementById('menu');
@@ -23,7 +23,6 @@ function activateMenu(hash){
 }
 
 async function renderDashboard(ctx){
-  const auth = getAuth();
   const db = getFirestore();
   // small KPIs
   const usersSnap = await getDocs(collection(db, 'employees'));
@@ -32,16 +31,50 @@ async function renderDashboard(ctx){
   const openJobs = await getDocs(query(collection(db,'jobs'), where('status','==','Aberta')));
   const openJobsCount = openJobs.size;
 
+  const activities = await fetchRecentActivities(8);
+  const timeline = activities.length ? activities.map(item => {
+    const info = describeActivity(item);
+    return `<li><div class="activity-line"><span class="when">${info.when}</span><span>${info.text}</span></div></li>`;
+  }).join('') : '<li>Sem movimentações recentes.</li>';
+
+  const approvedVacations = await getDocs(query(collection(db,'vacations'), where('status','==','Aprovada')));
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = [];
+  approvedVacations.forEach(doc => {
+    const data = doc.data();
+    if(!data.start) return;
+    const start = new Date(`${data.start}T00:00:00`);
+    if(Number.isNaN(start.getTime())) return;
+    if(start >= today){
+      upcoming.push({
+        email: data.email,
+        start: data.start,
+        end: data.end
+      });
+    }
+  });
+  upcoming.sort((a,b)=> new Date(`${a.start}T00:00:00`) - new Date(`${b.start}T00:00:00`));
+  const upcomingList = upcoming.slice(0,5).map(item => {
+    const start = new Date(`${item.start}T00:00:00`);
+    const end = item.end ? new Date(`${item.end}T00:00:00`) : null;
+    const period = `${start.toLocaleDateString('pt-BR')} → ${end ? end.toLocaleDateString('pt-BR') : '—'}`;
+    return `<li><strong>${item.email || '—'}</strong><br><small class="helper">${period}</small></li>`;
+  }).join('') || '<li>Sem férias aprovadas.</li>';
+
   view.innerHTML = `
     <div class="grid cols-3">
       <div class="kpi"><div class="label">Colaboradores</div><div class="value">${countEmployees}</div></div>
       <div class="kpi"><div class="label">Vagas Abertas</div><div class="value">${openJobsCount}</div></div>
       <div class="kpi"><div class="label">Mês Atual</div><div class="value">${new Date().toLocaleString('pt-BR',{month:'long'})}</div></div>
     </div>
-    <div class="grid cols-2" style="margin-top:1rem">
+    <div class="grid cols-3" style="margin-top:1rem">
       <div class="card">
         <h3>Atividades recentes</h3>
-        <ul id="timeline"><li>Bem-vindo ao RH Casa Rosa 💖</li></ul>
+        <ul id="timeline">${timeline}</ul>
+      </div>
+      <div class="card">
+        <h3>Próximas férias</h3>
+        <ul>${upcomingList}</ul>
       </div>
       <div class="card">
         <h3>Guia rápido</h3>
