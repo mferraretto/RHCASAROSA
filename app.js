@@ -5,14 +5,29 @@ import { fetchRecentActivities, describeActivity } from "./modules/activity.js";
 const view = document.getElementById('view');
 const menu = document.getElementById('menu');
 
+function callModuleView(name, fallbackLabel){
+  const fn = window[name];
+  if(typeof fn === 'function'){
+    return fn();
+  }
+
+  console.warn(`View "${name}" ainda não está disponível.`);
+  view.innerHTML = `
+    <div class="card">
+      <h2>${fallbackLabel}</h2>
+      <p class="helper">Não foi possível carregar esta área. Recarregue a página e tente novamente.</p>
+    </div>
+  `;
+}
+
 const routes = {
   dashboard: renderDashboard,
-  employees: window.EmployeesView,
-  attendance: window.AttendanceView,
-  vacations: window.VacationsView,
-  documents: window.DocumentsView,
-  ats: window.ATSView,
-  performance: window.PerformanceView,
+  employees: () => callModuleView('EmployeesView', 'Colaboradores'),
+  attendance: () => callModuleView('AttendanceView', 'Ponto'),
+  vacations: () => callModuleView('VacationsView', 'Férias'),
+  documents: () => callModuleView('DocumentsView', 'Documentos'),
+  ats: () => callModuleView('ATSView', 'Recrutamento'),
+  performance: () => callModuleView('PerformanceView', 'Desempenho'),
   settings: renderSettings
 };
 
