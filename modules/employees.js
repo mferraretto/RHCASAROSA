@@ -1,7 +1,10 @@
 // Employees module CRUD
-import { getFirestore, collection, addDoc, getDocs, doc, setDoc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { logActivity } from "./activity.js";
 
 const db = getFirestore();
+let employeesCache = [];
+let currentFilter = '';
 
 async function listEmployees(){
   const snap = await getDocs(collection(db,'employees'));
@@ -44,6 +47,47 @@ function renderTable(items){
   </table>`;
 }
 
+function filterEmployees(items, term){
+  if(!term) return [...items];
+  const q = term.trim().toLowerCase();
+  return items.filter(e=>{
+    return [e.name, e.email, e.role, e.costCenter].some(field => (field||'').toLowerCase().includes(q));
+  });
+}
+
+function renderSummary(items){
+  if(!items.length) return '<p class="helper">Cadastre colaboradores para ver indicadores.</p>';
+  const total = items.length;
+  const active = items.filter(e => (e.status || 'Ativo') === 'Ativo').length;
+  const inactive = total - active;
+  const today = new Date();
+  const month = today.getMonth();
+  const year = today.getFullYear();
+  const hiresThisMonth = items.filter(e => {
+    if(!e.hireDate) return false;
+    const [yy, mm, dd] = e.hireDate.split('-');
+    if(!yy || !mm) return false;
+    const hire = new Date(Number(yy), Number(mm)-1, Number(dd||'1'));
+    return hire.getFullYear() === year && hire.getMonth() === month;
+  }).length;
+  let salarySum = 0;
+  let salaryCount = 0;
+  items.forEach(e => {
+    const value = Number(e.salary);
+    if(!Number.isNaN(value) && value > 0){
+      salarySum += value;
+      salaryCount += 1;
+    }
+  });
+  const avgSalary = salaryCount ? (salarySum / salaryCount).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}) : '—';
+  const monthLabel = today.toLocaleString('pt-BR',{ month:'long' });
+  return [
+    `<div class="kpi small"><div class="label">Ativos</div><div class="value">${active}</div><small class="helper">Inativos: ${inactive}</small></div>`,
+    `<div class="kpi small"><div class="label">Novos em ${monthLabel}</div><div class="value">${hiresThisMonth}</div><small class="helper">Total geral: ${total}</small></div>`,
+    `<div class="kpi small"><div class="label">Média salarial</div><div class="value">${avgSalary}</div><small class="helper">Base em ${salaryCount} cadastros</small></div>`
+  ].join('');
+}
+
 async function openForm(existing=null){
   const container = document.getElementById('employees-form');
   container.innerHTML = `<div class="card">
@@ -74,31 +118,20 @@ async function openForm(existing=null){
   form.onsubmit = async (e)=>{
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form).entries());
-    if(existing) await saveEmployee(data, existing.id);
-    else await saveEmployee(data);
+    if(existing){
+      await saveEmployee(data, existing.id);
+      await logActivity('employee.update', { name: data.name, email: data.email, role: data.role });
+    } else {
+      const id = await saveEmployee(data);
+      await logActivity('employee.add', { id, name: data.name, email: data.email, role: data.role });
+    }
     window.EmployeesView();
     container.innerHTML='';
   };
 }
 
-window.EmployeesView = async function EmployeesView(){
-  const list = await listEmployees();
+function attachRowActions(){
   const container = document.getElementById('view');
-  container.innerHTML = `
-    <div class="grid cols-1">
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <h2>Colaboradores</h2>
-          <button class="btn" id="addEmp">Adicionar</button>
-        </div>
-        <div id="employees-table">${renderTable(list)}</div>
-        <div id="employees-form" style="margin-top:1rem"></div>
-      </div>
-    </div>
-  `;
-
-  document.getElementById('addEmp').onclick = ()=> openForm();
-
   container.querySelectorAll('button[data-edit]').forEach(btn=>{
     btn.onclick = async ()=>{
       const id = btn.getAttribute('data-edit');
@@ -109,9 +142,67 @@ window.EmployeesView = async function EmployeesView(){
   container.querySelectorAll('button[data-remove]').forEach(btn=>{
     btn.onclick = async ()=>{
       if(confirm('Remover colaborador?')){
-        await removeEmployee(btn.getAttribute('data-remove'));
+        const id = btn.getAttribute('data-remove');
+        const record = employeesCache.find(e => e.id === id);
+        await removeEmployee(id);
+        await logActivity('employee.remove', { id, name: record?.name, email: record?.email });
         window.EmployeesView();
       }
     };
   });
+}
+
+function refreshEmployeesUI(){
+  const summaryBox = document.getElementById('employees-summary');
+  if(summaryBox){
+    summaryBox.innerHTML = renderSummary(employeesCache);
+  }
+  const filtered = filterEmployees(employeesCache, currentFilter);
+  const tableBox = document.getElementById('employees-table');
+  if(tableBox){
+    tableBox.innerHTML = renderTable(filtered);
+  }
+  const countLabel = document.getElementById('employees-count');
+  if(countLabel){
+    countLabel.textContent = filtered.length ? `${filtered.length} de ${employeesCache.length} colaboradores exibidos` : 'Nenhum colaborador encontrado.';
+  }
+  attachRowActions();
+}
+
+window.EmployeesView = async function EmployeesView(){
+  const list = await listEmployees();
+  const container = document.getElementById('view');
+  container.innerHTML = `
+    <div class="grid cols-1">
+      <div class="card">
+        <div class="toolbar">
+          <div>
+            <h2 style="margin:0">Colaboradores</h2>
+            <small class="helper">Cadastro completo do time Casa Rosa</small>
+          </div>
+          <div class="toolbar-actions">
+            <input class="input search" id="empSearch" placeholder="Buscar por nome, e-mail ou cargo">
+            <button class="btn" id="addEmp">Adicionar</button>
+          </div>
+        </div>
+        <div id="employees-summary" class="summary-grid"></div>
+        <div id="employees-count" class="helper"></div>
+        <div id="employees-table"></div>
+        <div id="employees-form" style="margin-top:1rem"></div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('addEmp').onclick = ()=> openForm();
+  const searchInput = document.getElementById('empSearch');
+  if(searchInput){
+    searchInput.oninput = (e)=>{
+      currentFilter = e.target.value;
+      refreshEmployeesUI();
+    };
+  }
+
+  employeesCache = list;
+  currentFilter = '';
+  refreshEmployeesUI();
 }

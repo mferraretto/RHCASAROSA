@@ -25,6 +25,8 @@
         const uref = doc(db, "users", user.uid);
         const snap = await getDoc(uref);
         const profile = snap.exists() ? snap.data() : { role: "Colaborador", name: user.email };
+        window.__APP__.user = user;
+        window.__APP__.profile = profile;
         document.querySelector('#user-name').textContent = profile.name || user.email;
         document.querySelector('#user-role').textContent = profile.role || 'Colaborador';
         window.dispatchEvent(new CustomEvent('app:ready', { detail: { user, profile }}));

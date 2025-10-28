@@ -1,5 +1,6 @@
 // Simple ATS: jobs and candidates
 import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+import { logActivity } from "./activity.js";
 
 const db = getFirestore();
 
@@ -46,6 +47,7 @@ window.ATSView = async function ATSView(){
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.target).entries());
     await addDoc(collection(db,'jobs'), { ...data, createdAt:new Date().toISOString() });
+    await logActivity('job.create', { title: data.title, status: data.status });
     alert('Vaga criada!');
     window.ATSView();
   };
@@ -58,7 +60,12 @@ window.ATSView = async function ATSView(){
       const box = document.getElementById('job-detail');
       box.innerHTML = `
         <h2>${job.title}</h2>
-        <div class="badge">${job.status}</div>
+        <label class="helper" for="job-status">Status da vaga</label>
+        <select class="input" id="job-status">
+          <option value="Aberta" ${job.status==='Aberta'?'selected':''}>Aberta</option>
+          <option value="Pausada" ${job.status==='Pausada'?'selected':''}>Pausada</option>
+          <option value="Fechada" ${job.status==='Fechada'?'selected':''}>Fechada</option>
+        </select>
         <p>${job.desc||''}</p>
         <hr class="split">
         <h3>Adicionar candidato</h3>
@@ -78,9 +85,19 @@ window.ATSView = async function ATSView(){
         e.preventDefault();
         const data = Object.fromEntries(new FormData(e.target).entries());
         await addDoc(collection(db,'candidates'), { ...data, jobId:id, createdAt:new Date().toISOString() });
+        await logActivity('candidate.add', { name: data.name, email: data.email, job: job.title });
         alert('Candidato adicionado!');
         window.ATSView();
       };
+      const statusSelect = box.querySelector('#job-status');
+      if(statusSelect){
+        statusSelect.onchange = async (e)=>{
+          const status = e.target.value;
+          await updateDoc(doc(db,'jobs', id), { status });
+          await logActivity('job.status', { title: job.title, status });
+          window.ATSView();
+        };
+      }
     };
   });
 }
