@@ -24,7 +24,6 @@ const routes = {
   dashboard: renderDashboard,
   employees: () => callModuleView('EmployeesView', 'Colaboradores'),
   overtime: () => callModuleView('OvertimeView', 'Hora Extra'),
-  bonuses: () => callModuleView('BonusesView', 'Bônus / Premiação'),
   vacations: () => callModuleView('VacationsView', 'Férias'),
   documents: () => callModuleView('DocumentsView', 'Documentos'),
   ats: () => callModuleView('ATSView', 'Recrutamento'),
