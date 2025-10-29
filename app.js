@@ -23,7 +23,7 @@ function callModuleView(name, fallbackLabel){
 const routes = {
   dashboard: renderDashboard,
   employees: () => callModuleView('EmployeesView', 'Colaboradores'),
-  attendance: () => callModuleView('AttendanceView', 'Ponto'),
+  overtime: () => callModuleView('OvertimeView', 'Hora Extra'),
   vacations: () => callModuleView('VacationsView', 'Férias'),
   documents: () => callModuleView('DocumentsView', 'Documentos'),
   ats: () => callModuleView('ATSView', 'Recrutamento'),
@@ -95,7 +95,7 @@ async function renderDashboard(ctx){
         <h3>Guia rápido</h3>
         <ol>
           <li>Cadastre colaborador em <b>👥 Colaboradores</b></li>
-          <li>Peça para bater ponto em <b>⏱️ Ponto</b></li>
+          <li>Registre hora extra em <b>🕒 Hora Extra</b></li>
           <li>Suba documentos em <b>📁 Documentos</b></li>
           <li>Abra vagas e gerencie candidatos em <b>🧲 Recrutamento</b></li>
           <li>Registre metas/avaliações em <b>⭐ Desempenho</b></li>
