@@ -40,6 +40,7 @@ const labels = {
   'vacation.reject': (item) => `⚠️ Férias rejeitadas para ${item.meta?.email || 'colaborador'}`,
   'vacation.cancel': (item) => `🚫 Solicitação de férias cancelada (${item.meta?.email || 'colaborador'})`,
   'vacation.update': (item) => `✅ Férias ${item.meta?.status?.toLowerCase() || 'atualizadas'} para ${item.meta?.email || 'colaborador'}`,
+  'vacation.delete': (item) => `🗑️ Solicitação de férias removida (${item.meta?.email || 'colaborador'})`,
   'documents.upload': (item) => `📁 Documento (${item.meta?.type || 'Arquivo'}) enviado para ${item.meta?.employee || 'colaborador'}`,
   'job.create': (item) => `🧲 Nova vaga aberta: ${item.meta?.title || 'vaga'}`,
   'job.status': (item) => `🔁 Status da vaga atualizado para ${item.meta?.status || '—'}`,

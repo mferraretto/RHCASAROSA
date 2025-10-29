@@ -7,6 +7,7 @@ import {
   getDocs,
   query,
   updateDoc,
+  deleteDoc,
   doc,
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
@@ -421,6 +422,9 @@ function renderMyRequests(list, role) {
                 if (item.status === "PENDENTE_GESTAO") {
                   actions.push(`<button class="btn ghost" data-cancel-self="${item.id}">Cancelar</button>`);
                 }
+                if (role === "ADM" || role === "RH") {
+                  actions.push(`<button class="btn danger" data-delete="${item.id}">Apagar</button>`);
+                }
                 return `<tr>
                   <td>${item.start || "—"} → ${item.end || "—"}</td>
                   <td>${item.days || "—"}</td>
@@ -563,6 +567,9 @@ function renderManagerBoard(items, role) {
                     if (item.status === "PENDENTE_GESTAO" && (role === "ADM" || role === "RH")) {
                       actions.push(`<button class="btn ghost" data-cancel="${item.id}">Cancelar</button>`);
                     }
+                    if (role === "ADM" || role === "RH") {
+                      actions.push(`<button class="btn danger" data-delete="${item.id}">Apagar</button>`);
+                    }
                     return `<tr>
                       <td>${item.forName || item.forEmail || "—"}</td>
                       <td>${item.costCenter || "—"}</td>
@@ -703,6 +710,33 @@ async function changeStatus(id, status, notes = "") {
       ? "vacation.cancel"
       : "vacation.update";
   await logActivity(action, activityPayload);
+}
+
+async function deleteRequest(id) {
+  const user = getUser();
+  const profile = getProfile();
+  const role = profile?.role || "Colaborador";
+  if (!CREATOR_ROLES.includes(role)) {
+    throw new Error("Sem permissão para apagar solicitações.");
+  }
+  const request = vacationsCache.find((item) => item.id === id) || null;
+  await deleteDoc(doc(db, "vacations", id));
+  if (request) {
+    await logActivity("vacation.delete", {
+      email: request.forEmail || request.email || null,
+      start: request.start || null,
+      end: request.end || null,
+      status: request.status || null,
+      removedByRole: profile?.role || null,
+      removedBy: user?.uid || null
+    });
+  } else {
+    await logActivity("vacation.delete", {
+      removedByRole: profile?.role || null,
+      removedBy: user?.uid || null,
+      id
+    });
+  }
 }
 
 function exportToCsv(items) {
@@ -881,6 +915,21 @@ function attachActionButtons(role, user) {
       if (!id) return;
       if (!confirm("Confirmar cancelamento da solicitação?")) return;
       await changeStatus(id, "CANCELADA", "Cancelado pelo colaborador");
+      await window.VacationsView();
+    });
+  });
+  view.querySelectorAll("[data-delete]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-delete");
+      if (!id) return;
+      if (!confirm("Apagar permanentemente esta solicitação?")) return;
+      try {
+        await deleteRequest(id);
+        alert("Solicitação removida com sucesso.");
+      } catch (err) {
+        console.warn(err);
+        alert("Não foi possível apagar a solicitação.");
+      }
       await window.VacationsView();
     });
   });
