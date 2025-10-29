@@ -3,9 +3,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() { return request.auth != null; }
-    function userRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    function role() {
+      return isSignedIn() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : null;
     }
+    function userRole() {
+      return role();
+    }
+    function isADM(){ return isSignedIn() && userRole() == 'ADM'; }
+    function isRH(){ return isSignedIn() && userRole() == 'RH'; }
+    function isGestor(){ return isSignedIn() && userRole() == 'Gestor'; }
     function isAdmin(){ return isSignedIn() && userRole() in ['ADM','Gestor','RH']; }
     function isSelf(uid){ return isSignedIn() && uid == request.auth.uid; }
 
@@ -33,9 +39,42 @@ service cloud.firestore {
     }
 
     match /documents/{id} {
-      allow read: if isAdmin() || (isSignedIn() && resource.data.employee == request.auth.token.email);
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin();
+      function docOwner(doc) {
+        return doc.employeeUid;
+      }
+      function isDocSelf(doc) {
+        return isSignedIn() && docOwner(doc) != null && docOwner(doc) == request.auth.uid;
+      }
+      function ownerManagerUid(uid) {
+        return get(/databases/$(database)/documents/users/$(uid)).data.managerUid;
+      }
+      function employeeManagerUid(uid) {
+        return get(/databases/$(database)/documents/employees/$(uid)).data.managerUid;
+      }
+      function isManagerOf(doc) {
+        return isGestor() && docOwner(doc) != null && (
+          ownerManagerUid(docOwner(doc)) == request.auth.uid ||
+          employeeManagerUid(docOwner(doc)) == request.auth.uid
+        );
+      }
+
+      allow read: if isADM() || isRH() || isManagerOf(resource.data) || isDocSelf(resource.data);
+      allow create: if isADM() || isRH() || (
+        isDocSelf(request.resource.data) &&
+        request.resource.data.status == 'Em aprovacao'
+      );
+      allow update: if isADM() || isRH() || (
+        isDocSelf(resource.data) &&
+        resource.data.sign.status == 'Pendente' &&
+        request.resource.data.sign.status == 'Assinado' &&
+        request.resource.data.sign.byUid == request.auth.uid &&
+        request.resource.data.status == 'Valido' &&
+        !request.resource.data.diff(resource.data).changedKeys().hasAny([
+          'employeeUid','employeeEmail','type','title','tags','path','url','version',
+          'previousVersionId','uploadedBy','uploadedAt','approval','history','costCenter','notes'
+        ])
+      );
+      allow delete: if isADM() || isRH();
     }
 
     match /holerites/{id} {

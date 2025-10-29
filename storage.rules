@@ -3,21 +3,29 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     function isSignedIn() { return request.auth != null; }
-    function isAdmin() {
-      return isSignedIn() && request.auth.token.role in ['ADM','Gestor','RH'];
+    function role() {
+      return isSignedIn() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : null;
     }
-    match /rh/docs/{employee}/{fileName} {
-      allow read: if isSignedIn() && (isAdmin() || employee == request.auth.token.email);
-      allow write: if isAdmin();
+    function isADM() { return isSignedIn() && role() == 'ADM'; }
+    function isRH() { return isSignedIn() && role() == 'RH'; }
+    function isGestor() { return isSignedIn() && role() == 'Gestor'; }
+    function isPrivileged() { return isADM() || isRH() || isGestor(); }
+    function isOwner(uid) { return isSignedIn() && uid != null && uid == request.auth.uid; }
+    function matchesEmail(email) { return isSignedIn() && email != null && email == request.auth.token.email; }
+
+    match /rh/docs/{employeeUid}/{year}/{month}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isADM() || isRH();
     }
 
     match /rh/holerites/{employee}/{fileName} {
-      allow read: if isSignedIn() && (isAdmin() || employee == request.auth.uid || employee == request.auth.token.email);
-      allow write: if isAdmin();
+      allow read: if isPrivileged() || isOwner(employee) || matchesEmail(employee);
+      allow write: if isADM() || isRH();
     }
 
     match /rh/{allPaths=**} {
-      allow read, write: if isAdmin();
+      allow read: if isPrivileged();
+      allow write: if isADM() || isRH();
     }
   }
 }
