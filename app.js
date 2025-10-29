@@ -52,7 +52,7 @@ async function renderDashboard(ctx){
     return `<li><div class="activity-line"><span class="when">${info.when}</span><span>${info.text}</span></div></li>`;
   }).join('') : '<li>Sem movimentações recentes.</li>';
 
-  const approvedVacations = await getDocs(query(collection(db,'vacations'), where('status','==','Aprovada')));
+  const approvedVacations = await getDocs(query(collection(db,'vacations'), where('status','==','APROVADA')));
   const today = new Date(); today.setHours(0,0,0,0);
   const upcoming = [];
   approvedVacations.forEach(doc => {
@@ -62,7 +62,7 @@ async function renderDashboard(ctx){
     if(Number.isNaN(start.getTime())) return;
     if(start >= today){
       upcoming.push({
-        email: data.email,
+        email: data.forEmail || data.email,
         start: data.start,
         end: data.end
       });
