@@ -99,6 +99,7 @@ small.helper{color:#6b7280}
 .status-badge.rejected{background:#fee2e2;color:#991b1b}
 .status-badge.executed{background:#dbeafe;color:#1d4ed8}
 .status-badge.payroll{background:#ede9fe;color:#5b21b6}
+.status-badge.cancelled{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb}
 .badge-type{background:rgba(255,0,138,.12);color:var(--magenta);font-weight:600}
 .toolbar-card .toolbar{flex-wrap:wrap}
 .toolbar-left{display:flex;align-items:center;gap:.75rem;font-size:.9rem;color:#4b5563}
@@ -109,6 +110,8 @@ small.helper{color:#6b7280}
 .pill-block{padding:.75rem;border:1px solid #eef0f3;border-radius:.75rem;background:#f9fafb;display:flex;flex-direction:column;gap:.25rem}
 .pill-label{font-size:.75rem;text-transform:uppercase;color:#6b7280;letter-spacing:.04em}
 .pill-value{font-size:1.3rem;font-weight:700;color:#111827}
+.table-wrapper{overflow:auto}
+.table-actions{display:flex;flex-direction:column;gap:.35rem}
 .card.mini{background:#f9fafb}
 .card.mini strong{font-size:1rem}
 .card.mini .helper{display:block}
