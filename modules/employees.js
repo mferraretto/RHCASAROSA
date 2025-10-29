@@ -57,6 +57,57 @@ function formatDate(value) {
   return value;
 }
 
+const VACATION_STATUS_LABELS = {
+  RASCUNHO_RH: "Rascunho RH",
+  PENDENTE_GESTAO: "Pendente gestão",
+  APROVADA: "Aprovada",
+  REJEITADA: "Rejeitada",
+  CANCELADA: "Cancelada"
+};
+
+const VACATION_STATUS_BADGES = {
+  RASCUNHO_RH: "ghost",
+  PENDENTE_GESTAO: "warn",
+  APROVADA: "ok",
+  REJEITADA: "danger",
+  CANCELADA: "ghost"
+};
+
+function normalizeVacationStatus(status) {
+  if (!status) return "PENDENTE_GESTAO";
+  const key = String(status).toUpperCase();
+  switch (key) {
+    case "PENDENTE":
+    case "PENDENTE_GESTAO":
+      return "PENDENTE_GESTAO";
+    case "RASCUNHO_RH":
+    case "DRAFT":
+      return "RASCUNHO_RH";
+    case "APROVADA":
+    case "APROVADO":
+      return "APROVADA";
+    case "REJEITADA":
+    case "REJEITADO":
+    case "NEGADA":
+      return "REJEITADA";
+    case "CANCELADA":
+    case "CANCELADO":
+      return "CANCELADA";
+    default:
+      return "PENDENTE_GESTAO";
+  }
+}
+
+function formatVacationStatus(status) {
+  const normalized = normalizeVacationStatus(status);
+  return VACATION_STATUS_LABELS[normalized] || normalized;
+}
+
+function vacationBadgeClass(status) {
+  const normalized = normalizeVacationStatus(status);
+  return VACATION_STATUS_BADGES[normalized] || "ghost";
+}
+
 function getProfile() {
   return window.__APP__?.profile || { role: "Colaborador" };
 }
@@ -138,14 +189,30 @@ async function fetchPayslips(uid, email) {
 async function fetchVacationHistory(uid, email) {
   if (!uid && !email) return [];
   const conditions = [];
-  if (uid) conditions.push(query(collection(db, "vacations"), where("uid", "==", uid)));
-  if (email) conditions.push(query(collection(db, "vacations"), where("email", "==", email)));
+  if (uid) {
+    conditions.push(query(collection(db, "vacations"), where("forUid", "==", uid)));
+    conditions.push(query(collection(db, "vacations"), where("uid", "==", uid)));
+  }
+  if (email) {
+    conditions.push(query(collection(db, "vacations"), where("forEmail", "==", email)));
+    conditions.push(query(collection(db, "vacations"), where("email", "==", email)));
+    const lower = String(email).toLowerCase();
+    if (lower !== email) {
+      conditions.push(query(collection(db, "vacations"), where("forEmail", "==", lower)));
+    }
+  }
   const snapshots = await Promise.all(conditions.map((q) => getDocs(q).catch(() => null)));
-  const rows = [];
+  const map = new Map();
   snapshots.forEach((snap) => {
     if (!snap) return;
-    snap.forEach((docSnap) => rows.push({ id: docSnap.id, ...docSnap.data() }));
+    snap.forEach((docSnap) => {
+      map.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+    });
   });
+  const rows = Array.from(map.values()).map((item) => ({
+    ...item,
+    status: normalizeVacationStatus(item.status)
+  }));
   rows.sort((a, b) => new Date(b.start || 0) - new Date(a.start || 0));
   rows.reverse();
   return rows;
@@ -277,9 +344,9 @@ async function buildManagerSummary(items) {
   try {
     const vacationSnap = await getDocs(collection(db, "vacations"));
     vacationSnap.forEach((d) => {
-      const status = d.data().status;
-      if (status === "Pendente") pendingVacations += 1;
-      if (status === "Aprovada") approvedVacations += 1;
+      const status = normalizeVacationStatus(d.data().status);
+      if (status === "PENDENTE_GESTAO") pendingVacations += 1;
+      if (status === "APROVADA") approvedVacations += 1;
     });
   } catch (err) {
     console.warn("Falha ao carregar férias", err);
@@ -949,10 +1016,14 @@ function renderCollaboratorView(state) {
               <tbody>
                 ${vacations
                   .map(
-                    (item) => `<tr>
+                  (item) => {
+                    const badge = vacationBadgeClass(item.status);
+                    const label = formatVacationStatus(item.status);
+                    return `<tr>
                       <td>${item.start || "—"} → ${item.end || "—"}</td>
-                      <td><span class="badge ${item.status === "Aprovada" ? "ok" : item.status === "Rejeitada" ? "danger" : "warn"}">${item.status}</span></td>
-                    </tr>`
+                      <td><span class="badge ${badge}">${label}</span></td>
+                    </tr>`;
+                  }
                   )
                   .join("")}
               </tbody>
